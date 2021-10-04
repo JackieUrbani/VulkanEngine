@@ -38,5 +38,6 @@ private:
 	void render();
 
 	void handlePhysics();
+	int testConcurrency(int id);
 };
 

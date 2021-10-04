@@ -5,6 +5,7 @@
 #include <thread>
 #include <math.h>
 #include <csignal>
+#include <thread>
 
 #include "spdlog/spdlog.h"
 
@@ -99,12 +100,12 @@ std::unique_ptr<Model> createCubeModel(Device& device, glm::vec3 offset) {
 
 void Engine::loadGameObjects() {
 	std::shared_ptr<Model> model = createCubeModel(device, {.0f, .0f, .0f});
-	for (int i = 0; i < 10; i++) {
-		for (int j = 0; j < 10; j++) {
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
 			auto cube = GameObject::createGameObject("cube" + std::to_string(i) + std::to_string(j));
 			cube.model = model;
-			cube.transform.translation = { .2f + (i * .2f), .2f + (j * .2f), .5f };
-			cube.transform.scale = { .1f, .1f, .1f };
+			cube.transform.translation = { 2.0f + (i * 2.0f), 2.0f + (j * 2.0f), .5f };
+			cube.transform.scale = { 1.0f, 1.0f, 1.0f };
 			cube.transform.rotation = { 0.f, 0.5f, 0.f };
 			gameObjects.push_back(std::move(cube));
 		}
@@ -156,7 +157,7 @@ void Engine::run() {
 	double lastTime = glfwGetTime(), timer = lastTime;
 	double deltaTime = 0, nowTime = 0;
 	int frames = 0, updates = 0;
-	const double delta = 1.0 / 10.0;//120.0;
+	const double delta = 1.0 / 30.0;//120.0;
     
 	while (!window.shouldClose()) {
 		//get time
@@ -186,9 +187,20 @@ void Engine::run() {
 }
 
 void Engine::handlePhysics() {
-	for (GameObject & obj : Engine::gameObjects) {
-		//obj.transform.translation.x += obj.rigidbody.velocity.x;
-		obj.transform.translation += obj.rigidbody.velocity;
-		std::cout << obj.transform.translation.x << " + " << obj.rigidbody.velocity.x << std::endl;
+	std::thread t1{ Engine::testConcurrency(0) };
+	std::thread t2{ Engine::testConcurrency(5) };
+	t1.join();
+	t2.join();
+
+	//for (GameObject & obj : Engine::gameObjects) {
+	//	obj.transform.translation += obj.rigidbody.velocity;
+	//	std::cout << obj.transform.translation.x << " + " << obj.rigidbody.velocity.x << std::endl;
+	//}
+}
+
+int Engine::testConcurrency(int id) {
+	for (int i = id; i < id + 5; i++) {
+		std::cout << id << std::endl;
 	}
+	return 0;
 }

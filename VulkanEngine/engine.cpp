@@ -123,6 +123,9 @@ void Engine::render() {
 }
 
 void Engine::update() {
+	// Handle physics
+	Engine::handlePhysics();
+	
 	//PythonManager::runUpdates(); commented out for testing
 	camera.setProjection(glm::radians(45.f),  renderer.getAspectRatio(), 0.1f, 10.f);
 	if (InputManager::keys[GLFW_KEY_W]) {
@@ -153,7 +156,7 @@ void Engine::run() {
 	double lastTime = glfwGetTime(), timer = lastTime;
 	double deltaTime = 0, nowTime = 0;
 	int frames = 0, updates = 0;
-	const double delta = 1.0 / 120.0;
+	const double delta = 1.0 / 10.0;//120.0;
     
 	while (!window.shouldClose()) {
 		//get time
@@ -180,4 +183,12 @@ void Engine::run() {
 	}
 
 	vkDeviceWaitIdle(device.device());
+}
+
+void Engine::handlePhysics() {
+	for (GameObject & obj : Engine::gameObjects) {
+		//obj.transform.translation.x += obj.rigidbody.velocity.x;
+		obj.transform.translation += obj.rigidbody.velocity;
+		std::cout << obj.transform.translation.x << " + " << obj.rigidbody.velocity.x << std::endl;
+	}
 }

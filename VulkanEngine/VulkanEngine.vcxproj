@@ -218,6 +218,7 @@ pause</Command>
     <ClInclude Include="pythonManager.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="renderManager.h" />
+    <ClInclude Include="rigidbody.h" />
     <ClInclude Include="settings.h" />
     <ClInclude Include="swapchain.h" />
     <ClInclude Include="utils.h" />

@@ -7,6 +7,8 @@
 
 #include "model.h"
 
+#include "rigidbody.h"
+
 struct TransformComponent {
 	glm::vec3 translation{};
 	glm::vec3 scale{ 1.f, 1.f, 1.f };
@@ -28,7 +30,8 @@ class GameObject {
 public:
 	using id_t = unsigned int;
 
-	std::shared_ptr<Model> model{};
+	std::shared_ptr<Model> model{  };
+	Rigidbody rigidbody{ 1, box };
 	glm::vec3 color{};
 	TransformComponent transform{};
 

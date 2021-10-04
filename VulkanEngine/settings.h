@@ -1,11 +1,11 @@
 #pragma once
 
 namespace Settings {
-	#ifdef NDEBUG
+	//#ifdef NDEBUG
 		static const bool debugMode = false;
-	#else
-		static const bool debugMode = true;
-	#endif
+	//#else
+	//	static const bool debugMode = true;
+	//#endif
 
 
 	static inline int width = 800;

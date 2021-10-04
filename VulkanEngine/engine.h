@@ -34,10 +34,9 @@ private:
 
 	void loadGameObjects();
 
-	void update();
+	void update(int ticks, float rate);
 	void render();
 
-	void handlePhysics();
-	int testConcurrency(int id);
+	void handlePhysics(int ticks, float rate);
 };
 

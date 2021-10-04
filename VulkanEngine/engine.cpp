@@ -5,7 +5,6 @@
 #include <thread>
 #include <math.h>
 #include <csignal>
-#include <thread>
 
 #include "spdlog/spdlog.h"
 
@@ -34,7 +33,8 @@
 #include "inputManager.h"
 #include "pythonManager.h"
 
-
+glm::vec3 gravity{ 0.f, -9.8f, 0.f };
+float gravityScale = 0.0001f;
 std::vector<GameObject> Engine::gameObjects;
 
 Engine::Engine() {
@@ -100,12 +100,12 @@ std::unique_ptr<Model> createCubeModel(Device& device, glm::vec3 offset) {
 
 void Engine::loadGameObjects() {
 	std::shared_ptr<Model> model = createCubeModel(device, {.0f, .0f, .0f});
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
 			auto cube = GameObject::createGameObject("cube" + std::to_string(i) + std::to_string(j));
 			cube.model = model;
-			cube.transform.translation = { 2.0f + (i * 2.0f), 2.0f + (j * 2.0f), .5f };
-			cube.transform.scale = { 1.0f, 1.0f, 1.0f };
+			cube.transform.translation = { .2f + (i * .2f), .2f + (j * .2f), .5f };
+			cube.transform.scale = { 0.1f, 0.1f, 0.1f };
 			cube.transform.rotation = { 0.f, 0.5f, 0.f };
 			gameObjects.push_back(std::move(cube));
 		}
@@ -123,9 +123,9 @@ void Engine::render() {
 	}
 }
 
-void Engine::update() {
+void Engine::update(int ticks, float rate) {
 	// Handle physics
-	Engine::handlePhysics();
+	Engine::handlePhysics(ticks, rate);
 	
 	//PythonManager::runUpdates(); commented out for testing
 	camera.setProjection(glm::radians(45.f),  renderer.getAspectRatio(), 0.1f, 10.f);
@@ -157,7 +157,8 @@ void Engine::run() {
 	double lastTime = glfwGetTime(), timer = lastTime;
 	double deltaTime = 0, nowTime = 0;
 	int frames = 0, updates = 0;
-	const double delta = 1.0 / 30.0;//120.0;
+	float rate = 60.0;//120.0;
+	const double delta = 1.0 / rate;
     
 	while (!window.shouldClose()) {
 		//get time
@@ -167,7 +168,7 @@ void Engine::run() {
 
 		//update at delta
 		while (deltaTime >= 1.0) {
-			update();
+			update(updates, rate);
 			updates++;
 			deltaTime--;
 		}
@@ -186,21 +187,20 @@ void Engine::run() {
 	vkDeviceWaitIdle(device.device());
 }
 
-void Engine::handlePhysics() {
-	std::thread t1{ Engine::testConcurrency(0) };
-	std::thread t2{ Engine::testConcurrency(5) };
-	t1.join();
-	t2.join();
-
-	//for (GameObject & obj : Engine::gameObjects) {
-	//	obj.transform.translation += obj.rigidbody.velocity;
-	//	std::cout << obj.transform.translation.x << " + " << obj.rigidbody.velocity.x << std::endl;
-	//}
-}
-
-int Engine::testConcurrency(int id) {
-	for (int i = id; i < id + 5; i++) {
-		std::cout << id << std::endl;
+void Engine::handlePhysics(int ticks, float rate) {
+	// Update consistently regardless of update rate, assuming 30fps updates minimum?
+	float rateCap = 60.0f;
+	if ((ticks * 10) % (int)((rate / rateCap) * 10) == 0) {
+		// Loop through gameobjects
+		for (GameObject & obj : Engine::gameObjects) {
+			// Reset acceleration
+			obj.rigidbody.acceleration = glm::vec3{ 0.f, 0.f, 0.f };
+			// Apply changes to acceleration
+		
+			// Apply force to velocity
+			obj.rigidbody.velocity += obj.rigidbody.force();
+			// Translate object based on velocity and apply gravity separately
+			obj.transform.translation += obj.rigidbody.velocity += gravity * gravityScale;
+		}
 	}
-	return 0;
 }

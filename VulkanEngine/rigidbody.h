@@ -7,7 +7,7 @@ enum Collider { box, ball, mesh };
 class Rigidbody {
 public:
 	/* --- Physics Data --- */
-	glm::vec3 velocity{ 0.01f, 0.01f, 0.01f };
+	glm::vec3 velocity{ 0.f, 0.f, 0.f };
 	glm::vec3 acceleration{ 0.f, 0.f, 0.f };
 	/* --- Physics Properties --- */
 	float mass = 1;
@@ -24,6 +24,10 @@ public:
 	Rigidbody(float mass, Collider shape) {
 		this->mass = mass;
 		this->shape = shape;
+	}
+
+	glm::vec3 force() {
+		return mass * acceleration;
 	}
 
 private:

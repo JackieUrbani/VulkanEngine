@@ -34,9 +34,10 @@ private:
 
 	void loadGameObjects();
 
-	void update(int ticks, float rate);
+	void update();
 	void render();
 
-	void handlePhysics(int ticks, float rate);
+	void handlePhysics();
+	int collisionCheck(GameObject& obj);
 };
 

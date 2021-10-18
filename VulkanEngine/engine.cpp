@@ -34,7 +34,7 @@
 #include "pythonManager.h"
 
 glm::vec3 gravity{ 0.f, -9.8f, 0.f };
-float gravityScale = 0.0001f;
+float gravityScale = 0.00005f;
 std::vector<GameObject> Engine::gameObjects;
 
 Engine::Engine() {
@@ -100,16 +100,27 @@ std::unique_ptr<Model> createCubeModel(Device& device, glm::vec3 offset) {
 
 void Engine::loadGameObjects() {
 	std::shared_ptr<Model> model = createCubeModel(device, {.0f, .0f, .0f});
-	for (int i = 0; i < 10; i++) {
-		for (int j = 0; j < 10; j++) {
+	for (int i = 0; i < 1; i++) {
+		for (int j = 0; j < 2; j++) {
 			auto cube = GameObject::createGameObject("cube" + std::to_string(i) + std::to_string(j));
 			cube.model = model;
-			cube.transform.translation = { .2f + (i * .2f), .2f + (j * .2f), .5f };
+			cube.transform.translation = { 0.f, .2f + (j * .2f), 0.f };
 			cube.transform.scale = { 0.1f, 0.1f, 0.1f };
 			cube.transform.rotation = { 0.f, 0.5f, 0.f };
+			cube.rigidbody.gravity_multiplier = 1.f - (j * 0.25f);
 			gameObjects.push_back(std::move(cube));
 		}
 	}
+	// Create floor plane
+	auto floor = GameObject::createGameObject("floor");
+	floor.model = model;
+	floor.transform.translation = { 0.f, -1.f, 0.f };
+	floor.transform.scale = { 10.0f, 1.f, 10.0f };
+	floor.transform.rotation = { 0.f, 0.5f, 0.f };
+	floor.rigidbody.gravity_multiplier = 0;
+	floor.rigidbody.position_lock = glm::vec3(1, 1, 1);
+	floor.rigidbody.rotation_lock = glm::vec3(1, 1, 1);
+	gameObjects.push_back(std::move(floor));
 }
 
 
@@ -123,9 +134,9 @@ void Engine::render() {
 	}
 }
 
-void Engine::update(int ticks, float rate) {
+void Engine::update() {
 	// Handle physics
-	Engine::handlePhysics(ticks, rate);
+	Engine::handlePhysics();
 	
 	//PythonManager::runUpdates(); commented out for testing
 	camera.setProjection(glm::radians(45.f),  renderer.getAspectRatio(), 0.1f, 10.f);
@@ -168,7 +179,7 @@ void Engine::run() {
 
 		//update at delta
 		while (deltaTime >= 1.0) {
-			update(updates, rate);
+			update();
 			updates++;
 			deltaTime--;
 		}
@@ -187,20 +198,46 @@ void Engine::run() {
 	vkDeviceWaitIdle(device.device());
 }
 
-void Engine::handlePhysics(int ticks, float rate) {
-	// Update consistently regardless of update rate, assuming 30fps updates minimum?
-	float rateCap = 60.0f;
-	if ((ticks * 10) % (int)((rate / rateCap) * 10) == 0) {
-		// Loop through gameobjects
-		for (GameObject & obj : Engine::gameObjects) {
-			// Reset acceleration
-			obj.rigidbody.acceleration = glm::vec3{ 0.f, 0.f, 0.f };
-			// Apply changes to acceleration
+void Engine::handlePhysics() {
+	// Loop through gameobjects
+	for (GameObject & obj : Engine::gameObjects) {
+		// Reset acceleration
+		obj.rigidbody.acceleration = glm::vec3{ 0.f, 0.f, 0.f };
+		// Apply changes to acceleration
 		
-			// Apply force to velocity
-			obj.rigidbody.velocity += obj.rigidbody.force();
+		// Apply force to velocity
+		obj.rigidbody.velocity += obj.rigidbody.force();
+
+		int collided = Engine::collisionCheck(obj);
+
+		if (collided == 1) {
+			// Handle collisions
+		}
+		else {
 			// Translate object based on velocity and apply gravity separately
-			obj.transform.translation += obj.rigidbody.velocity += gravity * gravityScale;
+			obj.transform.translation += obj.rigidbody.velocity += gravity * gravityScale * obj.rigidbody.gravity_multiplier;
 		}
 	}
+	// Check if any objects are now touching eachother
+	
+}
+
+int Engine::collisionCheck(GameObject& obj) {
+	float smallest = 1;
+	for (GameObject& other : Engine::gameObjects) {
+		// Ensure it doesn't check against itself
+		if (obj.getId() != other.getId()) {
+			//std::cout << glm::distance(obj.transform.translation, other.transform.translation) << std::endl;
+			// Check if obj's collider is touching other's collider for each GameObject
+			if (glm::distance(obj.transform.translation, other.transform.translation) < smallest) {
+				smallest = glm::distance(obj.transform.translation, other.transform.translation);
+			}
+			if (glm::distance(obj.transform.translation, other.transform.translation) < 0.19f) {
+				// These objects are touching, make this not happen realistically
+				return 1;
+			}
+		}
+	}
+	std::cout << smallest << std::endl;
+	return 0;
 }

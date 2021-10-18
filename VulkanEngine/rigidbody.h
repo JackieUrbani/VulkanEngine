@@ -20,6 +20,8 @@ public:
 	// 0 = unlocked, 1 = locked */
 	glm::vec3 position_lock{ 0, 0, 0 };
 	glm::vec3 rotation_lock{ 0, 0, 0 };
+	/* --- Other Properties --- */
+	float gravity_multiplier = 1;
 
 	Rigidbody(float mass, Collider shape) {
 		this->mass = mass;
